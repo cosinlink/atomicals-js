@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable prettier/prettier */
-import axios, { AxiosResponse } from 'axios';
-import { ElectrumApiInterface, IUnspentResponse } from "./electrum-api.interface";
-import { UTXO } from "../types/UTXO.interface"
-import { detectAddressTypeToScripthash } from "../utils/address-helpers"
+import axios, {AxiosResponse} from 'axios';
+import {ElectrumApiInterface, IUnspentResponse} from "./electrum-api.interface";
+import {UTXO} from "../types/UTXO.interface"
+import {detectAddressTypeToScripthash} from "../utils/address-helpers"
 
 export class ElectrumApi implements ElectrumApiInterface {
     private isOpenFlag = false;
@@ -41,18 +41,39 @@ export class ElectrumApi implements ElectrumApiInterface {
     }
 
     public async call(method, params) {
-        try {
-            let response: AxiosResponse<any, any>;
-            if (this.usePost) {
-                response = await axios.post(`${this.baseUrl}/${method}`, {params});
-            } else {
-                response = await axios.get(`${this.baseUrl}/${method}?params=${JSON.stringify(params)}`);
+        const urls = [
+            'https://ep.nextdao.xyz/proxy',
+            'https://ep.atomicalswallet.com/proxy',
+            'https://ep.atomicals.xyz/proxy',
+            'https://ep.atomicalmarket.com/proxy',
+            'https://ep.consync.xyz/proxy',
+        ]
+        if (method.startsWith('blockchain.transaction.broadcast')) {
+            for (let i = 0; i < urls.length; i++) {
+                try {
+                    return await this.internalCall(urls[i], method, params)
+                } catch (error) {
+                    console.log(error);
+                }
             }
-            return response.data.response;
-        } catch (error) {
-            console.log(error);
-            throw error;
+        } else {
+            try {
+                return await this.internalCall(urls[0], method, params)
+            } catch (error) {
+                console.log(error);
+                throw error;
+            }
         }
+    }
+
+    public async internalCall(url, method, params) {
+        let response: AxiosResponse<any, any>;
+        if (this.usePost) {
+            response = await axios.post(`${url}/${method}`, {params});
+        } else {
+            response = await axios.get(`${url}/${method}?params=${JSON.stringify(params)}`);
+        }
+        return response.data.response;
     }
 
     public sendTransaction(signedRawTx: string): Promise<any> {
@@ -108,6 +129,7 @@ export class ElectrumApi implements ElectrumApiInterface {
             }
             return utxo && utxo.height <= 0;
         }
+
         return new Promise((resolve, reject) => {
             let intervalId: any;
             const checkForUtxo = async () => {
@@ -215,7 +237,7 @@ export class ElectrumApi implements ElectrumApiInterface {
     }
 
     public atomicalsByAddress(address: string): Promise<any> {
-        const { scripthash } = detectAddressTypeToScripthash(address);
+        const {scripthash} = detectAddressTypeToScripthash(address);
         return this.atomicalsByScripthash(scripthash)
     }
 
