@@ -5,6 +5,14 @@ import {ElectrumApiInterface, IUnspentResponse} from "./electrum-api.interface";
 import {UTXO} from "../types/UTXO.interface"
 import {detectAddressTypeToScripthash} from "../utils/address-helpers"
 
+const urls = [
+    'https://ep.nextdao.xyz/proxy',
+    'https://ep.atomicalswallet.com/proxy',
+    'https://ep.atomicals.xyz/proxy',
+    'https://ep.atomicalmarket.com/proxy',
+    'https://ep.consync.xyz/proxy',
+]
+
 export class ElectrumApi implements ElectrumApiInterface {
     private isOpenFlag = false;
 
@@ -41,17 +49,14 @@ export class ElectrumApi implements ElectrumApiInterface {
     }
 
     public async call(method, params) {
-        const urls = [
-            'https://ep.nextdao.xyz/proxy',
-            'https://ep.atomicalswallet.com/proxy',
-            'https://ep.atomicals.xyz/proxy',
-            'https://ep.atomicalmarket.com/proxy',
-            'https://ep.consync.xyz/proxy',
-        ]
         if (method.startsWith('blockchain.transaction.broadcast')) {
+            console.log("--------------start rpcs call--------------")
             for (let i = 0; i < urls.length; i++) {
                 try {
-                    return await this.internalCall(urls[i], method, params)
+                    console.log(`--------------${i} call ${urls[i]}--------------`)
+                    const res = await this.internalCall(urls[i], method, params)
+                    console.log(`-------------- success --------------`)
+                    return res
                 } catch (error) {
                     console.log(error);
                 }
