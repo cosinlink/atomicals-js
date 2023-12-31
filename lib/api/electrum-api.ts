@@ -70,7 +70,6 @@ export class ElectrumApi implements ElectrumApiInterface {
                 return await this.internalCall(this.baseUrl, method, params)
             } catch (error) {
                 console.log(error);
-                throw error;
             }
 
             console.log("-------------- other rpcs call--------------")
