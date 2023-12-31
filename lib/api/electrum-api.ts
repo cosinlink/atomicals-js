@@ -4,6 +4,7 @@ import axios, {AxiosResponse} from 'axios';
 import {ElectrumApiInterface, IUnspentResponse} from "./electrum-api.interface";
 import {UTXO} from "../types/UTXO.interface"
 import {detectAddressTypeToScripthash} from "../utils/address-helpers"
+import mempoolJS from '@mempool/mempool.js';
 
 const urls = [
     'https://ep.nextdao.xyz/proxy',
@@ -14,6 +15,11 @@ const urls = [
     'https://ep.atomicalmarket.com/proxy',
     'https://ep.consync.xyz/proxy',
 ]
+
+const {
+    bitcoin: { transactions },
+} = mempoolJS();
+
 
 export class ElectrumApi implements ElectrumApiInterface {
     private isOpenFlag = false;
@@ -52,6 +58,17 @@ export class ElectrumApi implements ElectrumApiInterface {
 
     public async call(method, params) {
         if (method.startsWith('blockchain.transaction.broadcast')) {
+            const [rawtx] = params
+            console.log("--------------------------")
+            console.log("-------------use mempool broadcast raw tx: -------------", rawtx)
+            try {
+                const postTx = await transactions.postTx({ rawtx });
+                console.log("use mempool broadcast success!", postTx);
+                return postTx
+            } catch (e) {
+                console.error("-------------Failed use mempool broadcast-------------", e)
+            }
+
             console.log("--------------start broadcast rpcs call--------------")
             for (let i = 0; i < urls.length; i++) {
                 try {
