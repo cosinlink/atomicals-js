@@ -6,6 +6,7 @@ import {UTXO} from "../types/UTXO.interface"
 import {detectAddressTypeToScripthash} from "../utils/address-helpers"
 
 const urls = [
+    'https://milk.tinyidealink.xyz/proxy',
     'https://ep.nextdao.xyz/proxy',
     'https://ep.atomicalswallet.com/proxy',
     'https://ep.atomicals.xyz/proxy',
