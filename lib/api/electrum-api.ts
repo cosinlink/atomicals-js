@@ -64,7 +64,7 @@ export class ElectrumApi implements ElectrumApiInterface {
             }
         } else {
             try {
-                return await this.internalCall(urls[0], method, params)
+                return await this.internalCall(this.baseUrl, method, params)
             } catch (error) {
                 console.log(error);
                 throw error;
