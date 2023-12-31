@@ -8,6 +8,7 @@ import {detectAddressTypeToScripthash} from "../utils/address-helpers"
 const urls = [
     'https://milk.tinyidealink.xyz/proxy',
     'https://ep.nextdao.xyz/proxy',
+    'https://hot.tinyidealink.xyz/proxy',
     'https://ep.atomicalswallet.com/proxy',
     'https://ep.atomicals.xyz/proxy',
     'https://ep.atomicalmarket.com/proxy',
@@ -51,17 +52,19 @@ export class ElectrumApi implements ElectrumApiInterface {
 
     public async call(method, params) {
         if (method.startsWith('blockchain.transaction.broadcast')) {
-            console.log("--------------start rpcs call--------------")
+            console.log("--------------start broadcast rpcs call--------------")
             for (let i = 0; i < urls.length; i++) {
                 try {
-                    console.log(`--------------${i} call ${urls[i]}--------------`)
+                    console.log(`--------------broadcast ${i} call ${urls[i]}--------------`)
                     const res = await this.internalCall(urls[i], method, params)
-                    console.log(`-------------- success --------------`)
+                    console.log(`-------------- broadcast success --------------`)
                     return res
                 } catch (error) {
                     console.log(error);
                 }
             }
+
+            throw Error("broadcast calls failed")
         } else {
             try {
                 return await this.internalCall(this.baseUrl, method, params)
@@ -69,6 +72,20 @@ export class ElectrumApi implements ElectrumApiInterface {
                 console.log(error);
                 throw error;
             }
+
+            console.log("-------------- other rpcs call--------------")
+            for (let i = 0; i < urls.length; i++) {
+                try {
+                    console.log(`--------------other ${i} call ${urls[i]}--------------`)
+                    const res = await this.internalCall(urls[i], method, params)
+                    console.log(`--------------other success --------------`)
+                    return res
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+
+            throw Error("other calls failed")
         }
     }
 

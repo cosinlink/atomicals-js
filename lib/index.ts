@@ -400,6 +400,9 @@ export class Atomicals implements APIInterface {
   }
 
   async mintDftInteractive(options: BaseRequestOptions, address: string, ticker: string, WIF: string): Promise<CommandResultInterface> {
+    console.log('---------------------- start mint dft ----------------------')
+    console.log(`---------------------- mint ${ticker}, satsbyte = ${options.satsbyte} ----------------------`)
+
     try {
       await this.electrumApi.open();
       const command: CommandInterface = new MintInteractiveDftCommand(this.electrumApi, options, address, ticker, WIF);
@@ -674,7 +677,7 @@ export class Atomicals implements APIInterface {
         atomicalIdReceiptType,
         forceSkipValidation,
       );
-      
+
       return await command.run();
     } catch (error: any) {
       return {

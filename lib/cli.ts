@@ -12,9 +12,10 @@ import { fileReader, jsonFileReader, jsonFileWriter } from './utils/file-utils';
 import * as cbor from 'borc';
 import { toOutputScript } from 'bitcoinjs-lib/src/address';
 import { compactIdToOutpoint, outpointToCompactId } from './utils/atomical-format-helpers';
-import * as quotes from 'success-motivational-quotes'; 
+import * as quotes from 'success-motivational-quotes';
 import * as chalk from 'chalk';
- 
+import axios from "axios";
+
 dotenv.config();
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -1556,6 +1557,26 @@ program.command('init-dft')
     }
   });
 
+
+async function getHalfHourFee(maxAllowedGasFee: any) {
+    let maxFee = 250
+    try {
+        maxFee = parseInt(maxAllowedGasFee)
+    } catch (e) {}
+
+    console.log(`---------------------- set maxAllowedGasFee = ${maxFee} ----------------------`)
+
+    try {
+        const response = await axios.get('https://mempool.space/api/v1/fees/recommended');
+        const halfHourFee = response.data.halfHourFee;
+        return halfHourFee && halfHourFee <= maxFee ? halfHourFee : maxFee;
+    } catch (error) {
+        console.error('Error fetching fee data:', error);
+        return maxFee
+    }
+}
+
+
 program.command('mint-dft')
   .description('Mint coins for a decentralized fungible token (FT)')
   .argument('<ticker>', 'string')
@@ -1576,7 +1597,11 @@ program.command('mint-dft')
 
       const result: any = await atomicals.mintDftInteractive({
         rbf: options.rbf,
-        satsbyte: parseInt(options.satsbyte),
+
+        // todo-ethan
+        // satsbyte: parseInt(options.satsbyte),
+        satsbyte: await getHalfHourFee(options.satsbyte),
+
         disableMiningChalk: options.disablechalk,
       }, walletRecord.address, ticker, fundingRecord.WIF);
       handleResultLogging(result, true);
@@ -1959,7 +1984,7 @@ program.command('store-file')
   .argument('<filepath>', 'string')
   .argument('<givenFileName>', 'string')
   .option('--rbf', 'Whether to enable RBF for transactions.')
-  .option('--funding <string>', 'Use wallet alias WIF key to be used for funding and change')     
+  .option('--funding <string>', 'Use wallet alias WIF key to be used for funding and change')
   .option('--satsbyte <number>', 'Satoshis per byte in fees', '15')
   .option('--satsoutput <number>', 'Satoshis to put into output', '1000')
   .option('--bitworkc <string>', 'Whether to put any bitwork proof of work into the token mint. Applies to the commit transaction.')
@@ -2039,7 +2064,7 @@ program.command('broadcast')
   .option('--rawtxfile <string>', 'File path to the rawtx')
   .action(async (options) => {
     try {
-    
+
       if (!options.rawtx && !options.rawtxfile) {
         throw new Error("must specify either rawtx or rawtxfile")
       }
@@ -2048,7 +2073,7 @@ program.command('broadcast')
         rawtx = options.rawtxfile;
         rawtx = await fileReader(rawtx, 'utf8');
       }
- 
+
       const result: any = await Atomicals.decodeTx(rawtx);
       handleResultLogging(result);
     } catch (error) {
